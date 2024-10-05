@@ -35,7 +35,7 @@ print(pop)
 
 # 初始化 Dash 應用
 app = dash.Dash(__name__)
-
+server = app.server
 total = 100
 colors = ['#FF5733', '#33FF57', '#3357FF', '#F3FF33', '#33FFF3']  # 自定義顏色組合
 
