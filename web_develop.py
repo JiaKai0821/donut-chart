@@ -217,7 +217,7 @@ def update_outputs(selected_country, s0, s1, s2, s3, s4, old_s0, old_s1, old_s2,
         total_l +=  l
         total_m +=  m
         
-    country_info = [{'country':selected_country, 'population':f"{str(round((float(pop[selected_country])/1e6),2)) +' Million'}", 'power':f"{power[selected_country] +"TWh"}"}]
+    country_info = [{'country':selected_country, 'population':f"{str(round((float(pop[selected_country])/1e6),2)) +' Million'}", 'power':f"{power[selected_country] +'TWh'}"}]
     #country_info = [{'country':selected_country, 'population':f"{pop[selected_country]}"}]
     # 更新表格數據
     table_data = [{'energy_source': label, 'percentage': f'{round(value,2)}%', 'emission':f'{emi}', 'area':f"{round(area,2)}", 'wetcap':f"{round(wetlandCap,2)}", 'soceerfield':f'{round(soccerArea,2)}'} for label, value,emi,area,wetlandCap,soccerArea in zip(labels, values,source_emi,wetland_area,wetlandPerCap,soccerfieldArea)]
