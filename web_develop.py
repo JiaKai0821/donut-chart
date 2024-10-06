@@ -45,10 +45,10 @@ app.layout = html.Div(style={'display': 'flex', 'flexDirection': 'column', 'back
     html.Div(style={'display': 'flex'}, children=[
         # 左側控制
         html.Div(style={'flex': '1', 'paddingRight': '40px'}, children=[
-            html.H2('Country Energy Source Percentage Control', style={'textAlign': 'center', 'color': '#333', 'fontFamily': 'Arial'}),
+            html.H2('What if we change our energy production source?', style={'textAlign': 'center', 'color': '#333', 'fontFamily': 'Arial'}),
 
             # 國家選單
-            html.Label('Select Country:', style={'fontSize': '18px', 'marginRight': '15px', 'fontFamily': 'Arial'}),
+            html.Label('Select Country to show original energy production profile : ', style={'fontSize': '18px', 'marginRight': '15px', 'fontFamily': 'Arial'}),
             dcc.Dropdown(
                 id='country-dropdown',
                 options=options,
@@ -56,6 +56,8 @@ app.layout = html.Div(style={'display': 'flex', 'flexDirection': 'column', 'back
                 clearable=False,
                 style={'width': '80%', 'borderRadius': '10px', 'boxShadow': '0px 3px 6px rgba(0, 0, 0, 0.16)', 'fontFamily': 'Arial'}
             ),
+            html.P('Play around the sliders! Change the energy production profile! What if we all in on coal?',
+           style={'fontSize': '16px', 'color': '#666', 'fontFamily': 'Arial', 'marginTop': '10px'}),
 
             # 生成 5 個滑動條
             html.Div(id='sliders', children=[
@@ -67,7 +69,7 @@ app.layout = html.Div(style={'display': 'flex', 'flexDirection': 'column', 'back
                 dcc.Slider(id='slider-1', min=0, max=total, step=1, value=30,
                            marks={i: f'{i}%' for i in range(0, total+1, 10)}, tooltip={"placement": "bottom", "always_visible": True}),
                 
-                html.Label('Renewable Sources:', style={'fontSize': '18px', 'marginTop': '20px', 'fontFamily': 'Arial'}),
+                html.Label('Renewables:', style={'fontSize': '18px', 'marginTop': '20px', 'fontFamily': 'Arial'}),
                 dcc.Slider(id='slider-2', min=0, max=total, step=1, value=15,
                            marks={i: f'{i}%' for i in range(0, total+1, 10)}, tooltip={"placement": "bottom", "always_visible": True}),
                 
@@ -95,7 +97,7 @@ app.layout = html.Div(style={'display': 'flex', 'flexDirection': 'column', 'back
            columns=[
                {'name': 'Country', 'id': 'country'},
                {'name': 'Population', 'id': 'population'},
-               {'name': 'Power', 'id':'power'}
+               {'name': 'Energy required for a year (fixed for each country)', 'id':'power'}
            ],
            data=[],
            style_cell={'textAlign': 'center', 'fontFamily': 'Arial', 'fontSize': '16px'},
@@ -103,16 +105,15 @@ app.layout = html.Div(style={'display': 'flex', 'flexDirection': 'column', 'back
         ),
 
         
-        html.H3('Energy Source Calculation Table', style={'textAlign': 'center', 'color': '#333', 'fontFamily': 'Arial'}),
+        html.H3(' Calculation for “Wetland area needed” for carbon neutral ', style={'textAlign': 'center', 'color': '#333', 'fontFamily': 'Arial'}),
         dash_table.DataTable(
             id='percentage-table',
             columns=[
                 {"name": 'Energy Source', "id": 'energy_source'},
-                {"name": 'Percentage (%)', "id": 'percentage'},
-                {"name": 'CO2 emission Per kWh', "id": 'emission' },
-                {"name": 'Replaced by equivalent Wetland area(Million Hectare)', "id":'area'},
-                {"name": 'Wetland Area Per Capita(Hectares)', 'id': 'wetcap'},
-                {"name": 'Wetland Area Per Capita(Soccer Field)', 'id':'soceerfield'}
+                {"name": 'Percentage', "id": 'percentage'},
+                {"name": 'gCO2/kWh', "id": 'emission' },
+                {"name": 'Area (Million Hectare)', "id":'area'},
+                {"name": 'Area per capita (Hectare/person)', 'id': 'wetcap'},
                 
             ],
             style_cell={'textAlign': 'center', 'fontFamily': 'Arial', 'fontSize': 16},
@@ -172,13 +173,13 @@ def update_outputs(selected_country, s0, s1, s2, s3, s4, old_s0, old_s1, old_s2,
                     values[i] += delta / 4  # 若其他值為0，平均分配delta
 
     # 更新 pie chart
-    labels = ['Natural Gas', 'Coal', 'Renewable Sources', 'Nuclear', 'Oil']
+    labels = ['Natural Gas', 'Coal', 'Renewables', 'Nuclear', 'Oil']
     fig = go.Figure(data=[go.Pie(labels=labels, values=values,
                                  marker=dict(colors=colors, line=dict(color='#FFF', width=2)), hole=0.4)])  # donut chart
     
     # 更新 pie chart 樣式
     fig.update_layout(
-        title_text='Energy Source Pie Chart',
+        title_text='Dynamic donut chart',
         annotations=[dict(text=f'{int(sum(values))}%', x=0.5, y=0.5, font_size=20, showarrow=False)],
         font=dict(size=14, color='#333', family='Arial'),
         legend=dict(orientation='h', yanchor='bottom', y=-0.2, xanchor='center', x=0.5),
@@ -202,28 +203,24 @@ def update_outputs(selected_country, s0, s1, s2, s3, s4, old_s0, old_s1, old_s2,
     total_m = 0
     #除以人均負擔wetland面積
     wetlandPerCap = []
-    soccerfieldArea = []
     
     #人均wetland_area大小
     for i in wetland_area:
         result = float(i) /float(pop[selected_country]) * 1e6
-        result_soccer = result/0.714
         wetlandPerCap.append(result)
-        soccerfieldArea.append(result_soccer)
-    for i,j,k,l,m in zip(values, source_emi,wetland_area, wetlandPerCap,soccerfieldArea):
+    for i,j,k,l in zip(values, source_emi,wetland_area, wetlandPerCap):
         total_i +=  i
         total_j +=  i/100*j
         total_k +=  k
         total_l +=  l
-        total_m +=  m
         
-    country_info = [{'country':selected_country, 'population':f"{str(round((float(pop[selected_country])/1e6),2)) +' Million'}", 'power':f"{power[selected_country] +'TWh'}"}]
+    country_info = [{'country':selected_country, 'population':f"{str(round((float(pop[selected_country])/1e6),2)) +' Million'}", 'power':f"{power[selected_country] +' TWh'}"}]
     #country_info = [{'country':selected_country, 'population':f"{pop[selected_country]}"}]
     # 更新表格數據
-    table_data = [{'energy_source': label, 'percentage': f'{round(value,2)}%', 'emission':f'{emi}', 'area':f"{round(area,2)}", 'wetcap':f"{round(wetlandCap,2)}", 'soceerfield':f'{round(soccerArea,2)}'} for label, value,emi,area,wetlandCap,soccerArea in zip(labels, values,source_emi,wetland_area,wetlandPerCap,soccerfieldArea)]
+    table_data = [{'energy_source': label, 'percentage': f'{round(value,2)}%', 'emission':f'{emi}', 'area':f"{round(area,2)}", 'wetcap':f"{round(wetlandCap,2)}"} for label, value,emi,area,wetlandCap in zip(labels, values,source_emi,wetland_area,wetlandPerCap)]
     #顯示計算的綜合數值
     
-    table_data.append({'energy_source':"Total", 'percentage':f"{round(total_i,2)}%",'emission':f"{round(total_j,2)}*", 'area':f"{round(total_k,2)}", 'wetcap':f"{round(total_l,2)}", 'soceerfield':f"{round(total_m,2)}" })
+    table_data.append({'energy_source':"Total", 'percentage':f"{round(total_i,2)}%",'emission':f"{round(total_j,2)}*", 'area':f"{round(total_k,2)}", 'wetcap':f"{round(total_l,2)}"})
     
     return values[0], values[1], values[2], values[3], values[4], fig, table_data,country_info
 
